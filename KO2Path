@@ -1,0 +1,189 @@
+#!/usr/bin/env perl
+#Written by Manan Shah v1
+#contact: m.shah@ncl.res.in or manan.b.shah@gmail.com
+#Add comments here to list changelog
+use strict;
+use warnings;
+print "
+KO2Path
+
+This script is designed to convert the output of Tax4Fun to a Pathway Profile using kegg.jp as reference.
+
+Developed on and for Unix/Linux.
+If you are behind a proxy before the program is executed you will need to set proxy address as:
+
+export http_proxy://user:password\@proxyaddress:port/
+
+Thank you for using this program
+--Developed by Manan Shah
+contact: m.shah\@ncl.res.in or manan.b.shah\@gmail.com
+
+Free to be modified by fellow researchers. Would suggest adding a comment lines to describe the changes made.
+";
+																		#opening the Tax4Fun output
+my $filepath;
+my $keyword;
+if ( exists($ARGV[0])){
+	$filepath=$ARGV[0];
+}else{
+	
+	print "Please Enter File Name:";
+	chomp($filepath=<STDIN>);
+}
+print "\nFile Bieng Processed $filepath\n";
+if ( exists($ARGV[1])){
+	$keyword=$ARGV[1];
+	print "sub class keyword:$keyword";
+}else{
+	
+	print "Sub-sub Class (Keyword)[Leave Blank If not required]:";
+	chomp($keyword=<STDIN>);
+}
+
+open (my $fh, "<", $filepath);
+chomp(my $headerline=<$fh>);
+my @headers=split("\t",$headerline);
+shift(@headers);														#identifying the sample IDs
+
+my @arrayofhashes;														#declaring global variables
+my @unique_pathways;
+my %ClassCount;
+my $indetcount=0;
+my @keyword_array;
+my %keyword_profile;
+
+print "\n";
+print print "processing identifier no:\n";
+foreach my $line (<$fh>){												#reading each line of Tax4Fun file
+	if ($line=~/"(K\d+);\s(.+)".+/){											#identifying kegg orthology identifiers
+		print "\b\b\b\b\b";
+		my $kidentifier=$1;
+		my $prot=$2;
+		my @pathways=find_pathways($kidentifier,$2);
+		$indetcount++;
+		print "$indetcount";
+		if (exists $keyword_profile{$kidentifier}){
+				$keyword_profile{$kidentifier}=$line;
+		}
+		if (scalar(@pathways)!=0){
+			calculate_pathway_profile($line,\@pathways);
+		}
+	}
+}
+
+close($fh);																#close Tax4Fun file
+
+my $outfilename=$filepath."_pathwaysprofile.tsv";
+my $outfile2=$filepath."_classkeywordprofile.tsv";
+print "\n\nOutput saved to $outfilename\n";
+open (my $output, ">",$outfilename);									#open OUTPUT file;
+
+#Writing Sublevel Profile
+print $output "\"KEGG_PATHWAY_ID\"\t";foreach(@headers){print $output "$_\t";};print $output "\n"; #printing the header line in output
+@unique_pathways=sort @unique_pathways;
+for(my $i=0;$i<scalar(@unique_pathways);$i++){							#printing the pathway profile
+	my $thispathway=$unique_pathways[$i];
+	my $class_count=$ClassCount{$thispathway}/scalar(@headers);
+	print $output "\"$thispathway($class_count)\"\t";
+	for(my $x=0;$x<scalar(@headers);$x++){
+		print $output "$arrayofhashes[$x]{$thispathway}\t";
+	}
+	print $output "\n";
+}
+close ($output);
+
+#Writing Keyword Profile
+if($keyword=~/\w/){
+	open (my $output2, ">",$outfile2);									#open OUTPUT file number 2 for keywords;
+	print $output2 "\"KEGG_pathway\"\t";foreach(@headers){print $output2 "$_\t";};print $output2 "\n"; #printing the header line in output
+	print "the pathways from class with keyword $keyword are: \n";
+	for (my $x=0; $x<scalar(@keyword_array);$x++){
+		print "$keyword_array[$x]\n";
+		print $output2 "$keyword_profile{$keyword_array[$x]}";
+	}
+	close($output2);
+}
+
+sub find_pathways{														#subroutine to fetch kegg pathways from KEGG
+	my $kid=$_[0];
+	my $prot=$_[1];
+	my $ddir="/home/ncim/Softwares/ancillary/Kegg/";
+	opendir my $dir, $ddir or die "Cannot open directory: $ddir $!";
+	my @kegg_folder = readdir $dir;
+	closedir $dir;
+	my @try;
+	my $keggfolderstring="@kegg_folder";
+	if($keggfolderstring=~/\s$kid\s/){
+		my $kegg_file=$ddir.$kid;
+		@try=`cat $kegg_file`;
+	}else{
+		my $kegg_file=$ddir.$kid;
+		my @try2=`curl -s http://rest.kegg.jp/get/$kid >$kegg_file`;
+		@try=`cat $kegg_file`;
+	}
+	my $flag=0;
+	my @out;
+	my $ret;
+	foreach my $kline(@try){
+		if($kline=~/^\w/){$flag=0;}
+		if($kline=~/^PATHWAY\s+(.*)/){
+			$flag=1;
+			my $koid=$1;
+			push (@out,$koid);
+			if($koid=~/$keyword/)
+			{
+				push(@keyword_array,"$kid");
+				$keyword_profile{$kid}="";
+			}
+		}
+		if ($flag==1 && $kline=~/^\s/){
+			chomp(my $x=$kline);
+			$x=~s/\s+//;
+			if($x=~/$keyword/)
+			{
+				push(@keyword_array,"$kid");
+				$keyword_profile{$kid}="";
+			}
+			push(@out,$x);
+		}
+		
+	}
+	if (scalar(@out)<1){push (@out, "Unknown Pathways $kid")}
+	return @out;
+}
+		
+
+
+sub calculate_pathway_profile{											#subroutine to process the profile into one table
+	my $line=$_[0];
+	my $rpathways=$_[1];
+	my @pathways=@$rpathways;
+	my @raw_values=split("\t",$line);
+	shift(@raw_values);
+	for(my $i=0;$i<scalar(@headers);$i++){
+		my $value=$raw_values[$i];
+		my $devidevalues=$value/scalar(@pathways);
+		foreach my $pathway(@pathways){
+			#my $uniquepathstring="@unique_pathways";
+			#if ( $uniquepathstring=~/\s$pathway\s/ ){
+			if ($pathway~~@unique_pathways){
+				my $tmp=$ClassCount{$pathway};
+				$tmp++;
+				$ClassCount{$pathway}=$tmp;
+				} else{
+					push(@unique_pathways,$pathway);
+					$ClassCount{$pathway}=1;
+				}
+			if (exists $arrayofhashes[$i]{$pathway}){
+				my $tmp=$arrayofhashes[$i]{$pathway};
+				$tmp=$tmp+$devidevalues;
+				$arrayofhashes[$i]{$pathway}=$tmp;
+				}else{
+					$arrayofhashes[$i]{$pathway}=$devidevalues;
+					}
+			
+		}
+
+	}
+
+}

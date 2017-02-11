@@ -80,7 +80,7 @@ open (my $output, ">",$outfilename);									#open OUTPUT file;
 
 #Writing Sublevel Profile
 print $output "\"KEGG_PATHWAY_ID\"\t";foreach(@headers){print $output "$_\t";};print $output "\n"; #printing the header line in output
-@unique_pathways=sort @unique_pathways;
+@unique_pathways= reverse sort @unique_pathways;
 for(my $i=0;$i<scalar(@unique_pathways);$i++){							#printing the pathway profile
 	my $thispathway=$unique_pathways[$i];
 	my $class_count=$ClassCount{$thispathway}/scalar(@headers);

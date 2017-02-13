@@ -23,6 +23,7 @@ Free to be modified by fellow researchers. Would suggest adding a comment lines 
 																		#opening the Tax4Fun output
 my $filepath;
 my $keyword;
+my $kegg_dir;
 if ( exists($ARGV[0])){
 	$filepath=$ARGV[0];
 }else{
@@ -38,6 +39,13 @@ if ( exists($ARGV[1])){
 	
 	print "Sub-sub Class (Keyword)[Leave Blank If not required]:";
 	chomp($keyword=<STDIN>);
+}
+if ( exists($ARGV[2])){
+	$kegg_dir=$ARGV[2];
+	print "Folder to store and retrive KEGG data from:$kegg_dir";
+}else{
+	print "Folder to store and retrive KEGG data from\n(Check Readme for Reason):";
+	chomp($kegg_dir=<STDIN>);
 }
 
 open (my $fh, "<", $filepath);
@@ -59,7 +67,7 @@ foreach my $line (<$fh>){												#reading each line of Tax4Fun file
 		print "\b\b\b\b\b";
 		my $kidentifier=$1;
 		my $prot=$2;
-		my @pathways=find_pathways($kidentifier,$2);
+		my @pathways=find_pathways($kidentifier,$prot,);
 		$indetcount++;
 		print "$indetcount";
 		if (exists $keyword_profile{$kidentifier}){
@@ -74,13 +82,13 @@ foreach my $line (<$fh>){												#reading each line of Tax4Fun file
 close($fh);																#close Tax4Fun file
 
 my $outfilename=$filepath."_pathwaysprofile.tsv";
-my $outfile2=$filepath."_pathway_keyword_profile.tsv";
+my $outfile2=$filepath."_pathkeywordprofile.tsv";
 print "\n\nOutput saved to $outfilename\n";
 open (my $output, ">",$outfilename);									#open OUTPUT file;
 
 #Writing Sublevel Profile
 print $output "\"KEGG_PATHWAY_ID\"\t";foreach(@headers){print $output "$_\t";};print $output "\n"; #printing the header line in output
-@unique_pathways= reverse sort @unique_pathways;
+@unique_pathways=sort @unique_pathways;
 for(my $i=0;$i<scalar(@unique_pathways);$i++){							#printing the pathway profile
 	my $thispathway=$unique_pathways[$i];
 	my $class_count=$ClassCount{$thispathway}/scalar(@headers);
@@ -107,7 +115,7 @@ if($keyword=~/\w/){
 sub find_pathways{														#subroutine to fetch kegg pathways from KEGG
 	my $kid=$_[0];
 	my $prot=$_[1];
-	my $ddir="/home/ncim/Softwares/ancillary/Kegg/";
+	my $ddir=$kegg_dir;
 	opendir my $dir, $ddir or die "Cannot open directory: $ddir $!";
 	my @kegg_folder = readdir $dir;
 	closedir $dir;

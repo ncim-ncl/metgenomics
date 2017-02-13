@@ -63,15 +63,12 @@ STEP1: Run Tax4Fun
 ----------------
 Note the path of tsv format of Qiime Biom made using SILVA. if biom is
 in binary/hdf5 format convert it using:
-
 `biom convert -i <BIOM FILE> -o <OUT FILE NAME> --to-tsv --header-key taxonomy`
 
 You can run Tax4Fun with the Script provided:
-
 `perl runningt4f.pl`
-
-First you will be prompted for SILVA reference data Folder, usually 
-ending with : "SILVA123/" for version 123. please enter full path
+first you will be prompted for SILVA reference data Folder, usually 
+ending with : "SILVA123/" for version 123. please enter full path.
 
 Next you will be prompted for FOLDER where the input file and output 
 file would be present.
@@ -87,41 +84,42 @@ based on information present on KEGG database and Tax4Fun output.
 
 Make sure your internet connection is working. If you are behind a 
 institution proxy you will need to enter the following command:
-`export http_proxy=http://proxyUsername:Password@Proxyaddress:Port`
+`export http_proxy=http://<proxyUsername>:<proxyPassword>@<Proxyaddress>:<Port>`
 
 KO2Path usage :
-`./KO2Path <inputfile> "<keyword>" <KEGG_Storage_folder>`
+./KO2Path <inputfile> "<keyword>" <KEGG_Storage_folder>
 
 This has to be run from the folder where the script is present
 
 <inputfile> would have the COMPLETE path of the Tax4fun output.
 
 <keyword> would be the pathway whose all the molecule you would like to 
-see specially in a seperate file . leave blank if not required but still 
+see specially in a seperate file. Leave blank if not required but still 
 leave "".
 
 <KEGG_Storage_folder> would be the folder where you would like to store 
 the KEGG files for quicker access. make sure the directory exists.
 
-The output would be save in the same folder as your input file.
+The output would be saved in the same folder as your input file.
 
 STEP3: Run Path2Class
 ----------------------
-In this step we will convert the KO2Path Output into a Pathways profile
-based on information present on KEGG database and Tax4Fun output.
+In this step we will convert the KO2Path Output into a Class/Sub-class 
+profile based on information present on KEGG database and Tax4Fun
+output.
 
 KO2Path usage :
-`./Path2Class <inputfile> "<keyword>" <KEGG_Storage_folder>`
+./Path2Class <inputfile> "<keyword>" <KEGG_Storage_folder>
 
 This has to be run from the folder where the script is present
 
-<inputfile> would have the COMPLETE path of the Tax4fun output.
+<inputfile> would have the COMPLETE path of the KO2Path output.
 
 <keyword> would be the pathway whose all the molecule you would like to 
-see specially in a seperate file . leave blank if not required but still 
+see specially in a seperate file. Leave blank if not required but still 
 leave "".
 
 <KEGG_Storage_folder> would be the folder where you would like to store 
 the KEGG files for quicker access. make sure the directory exists.
 
-The output would be save in the same folder as your input file.
+The output would be saved in the same folder as your input file.

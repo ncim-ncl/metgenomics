@@ -63,14 +63,17 @@ STEP1: Run Tax4Fun
 ----------------
 Note the path of tsv format of Qiime Biom made using SILVA. if biom is
 in binary/hdf5 format convert it using:
+
 `biom convert -i <BIOM FILE> -o <OUT FILE NAME> --to-tsv --header-key taxonomy`
 
 You can run Tax4Fun with the Script provided:
+
 `perl runningt4f.pl`
-first you will be prompted for SILVA reference data Folder, usually 
+
+First you will be prompted for SILVA reference data Folder, usually 
 ending with : "SILVA123/" for version 123. please enter full path
 
-next you will be prompted for FOLDER where the input file and output 
+Next you will be prompted for FOLDER where the input file and output 
 file would be present.
 (please note: do not provide path to input file here)
 
@@ -87,7 +90,7 @@ institution proxy you will need to enter the following command:
 `export http_proxy=http://proxyUsername:Password@Proxyaddress:Port`
 
 KO2Path usage :
-./KO2Path <inputfile> "<keyword>" <KEGG_Storage_folder>
+`./KO2Path <inputfile> "<keyword>" <KEGG_Storage_folder>`
 
 This has to be run from the folder where the script is present
 
@@ -108,7 +111,7 @@ In this step we will convert the KO2Path Output into a Pathways profile
 based on information present on KEGG database and Tax4Fun output.
 
 KO2Path usage :
-./Path2Class <inputfile> "<keyword>" <KEGG_Storage_folder>
+`./Path2Class <inputfile> "<keyword>" <KEGG_Storage_folder>`
 
 This has to be run from the folder where the script is present
 

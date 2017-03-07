@@ -1,0 +1,19 @@
+Version 0.5
+------------------
+Base Code. works with windows(wget) and linux
+
+Version 0.6
+------------------
+added ability to input file names and values as comandline arguments instead of in-code STDIN. for KO2PATH and PATH2Class.
+No longer useable On Windows.
+
+Version 1.0
+--------------
+bug fixes and primary release of KO2Path and PAth2Class.
+addedd runningt4f.pl.
+
+Version 1.2
+--------------
+Bug Fixes.
+Added output for Path2Class for Sub-level profile.
+Added Counts to final bash output of KO2Path

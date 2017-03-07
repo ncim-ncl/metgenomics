@@ -2,6 +2,7 @@
 #Written by Manan Shah v1
 #contact: m.shah@ncl.res.in or manan.b.shah@gmail.com
 #Add comments here to list changelog
+#Idea and Inspiration of this script was given by Dr. Mahesh Dharne and Dr. Dheeraj Dhotre
 use strict;
 use warnings;
 print "
@@ -10,9 +11,7 @@ KO2Path
 This script is designed to convert the output of Tax4Fun to a Pathway Profile using kegg.jp as reference.
 
 Developed on and for Unix/Linux.
-If you are behind a proxy before the program is executed you will need to set proxy address as:
-
-export http_proxy://user:password\@proxyaddress:port/
+If you are behind a proxy (Check README)
 
 Thank you for using this program
 --Developed by Manan Shah
@@ -24,6 +23,9 @@ Free to be modified by fellow researchers. Would suggest adding a comment lines 
 my $filepath;
 my $keyword;
 my $kegg_dir;
+my $total_molecule=0;
+my $unclassified_molecules=0;
+my $classified_molecules=0;
 if ( exists($ARGV[0])){
 	$filepath=$ARGV[0];
 }else{
@@ -34,7 +36,7 @@ if ( exists($ARGV[0])){
 print "\nFile Bieng Processed $filepath\n";
 if ( exists($ARGV[1])){
 	$keyword=$ARGV[1];
-	print "sub class keyword:$keyword";
+	print "sub class keyword:$keyword\n";
 }else{
 	
 	print "Sub-sub Class (Keyword)[Leave Blank If not required]:";
@@ -42,13 +44,13 @@ if ( exists($ARGV[1])){
 }
 if ( exists($ARGV[2])){
 	$kegg_dir=$ARGV[2];
-	print "Folder to store and retrive KEGG data from:$kegg_dir";
+	print "Folder to store and retrive KEGG data from:$kegg_dir\n";
 }else{
 	print "Folder to store and retrive KEGG data from\n(Check Readme for Reason):";
 	chomp($kegg_dir=<STDIN>);
 }
-
-open (my $fh, "<", $filepath);
+#$filepath="/home/ncim/Hot_spring_ind/asia_out/Tax4FunOutput.tsv";
+open (my $fh, "<", $filepath) || die "File not found: $filepath";
 chomp(my $headerline=<$fh>);
 my @headers=split("\t",$headerline);
 shift(@headers);														#identifying the sample IDs
@@ -82,7 +84,7 @@ foreach my $line (<$fh>){												#reading each line of Tax4Fun file
 close($fh);																#close Tax4Fun file
 
 my $outfilename=$filepath."_pathwaysprofile.tsv";
-my $outfile2=$filepath."_pathkeywordprofile.tsv";
+my $outfile2=$filepath."_path"."$keyword"."_profile.tsv";
 print "\n\nOutput saved to $outfilename\n";
 open (my $output, ">",$outfilename);									#open OUTPUT file;
 
@@ -92,6 +94,7 @@ print $output "\"KEGG_PATHWAY_ID\"\t";foreach(@headers){print $output "$_\t";};p
 for(my $i=0;$i<scalar(@unique_pathways);$i++){							#printing the pathway profile
 	my $thispathway=$unique_pathways[$i];
 	my $class_count=$ClassCount{$thispathway}/scalar(@headers);
+	if($thispathway=~/^Unk/){$unclassified_molecules=$unclassified_molecules+$class_count;}
 	print $output "\"$thispathway($class_count)\"\t";
 	for(my $x=0;$x<scalar(@headers);$x++){
 		print $output "$arrayofhashes[$x]{$thispathway}\t";
@@ -99,6 +102,9 @@ for(my $i=0;$i<scalar(@unique_pathways);$i++){							#printing the pathway profi
 	print $output "\n";
 }
 close ($output);
+$total_molecule=$indetcount;
+$classified_molecules=$total_molecule-$unclassified_molecules;
+print "\n\nClassified $classified_molecules Molecules out of total of $total_molecule\n\n";
 
 #Writing Keyword Profile
 if($keyword=~/\w/){
@@ -156,7 +162,7 @@ sub find_pathways{														#subroutine to fetch kegg pathways from KEGG
 		}
 		
 	}
-	if (scalar(@out)<1){push (@out, "Unknown Pathways $kid")}
+	if (scalar(@out)<1){push (@out, "Unknown Pathways $kid-$prot")}
 	return @out;
 }
 		
@@ -195,3 +201,4 @@ sub calculate_pathway_profile{											#subroutine to process the profile into
 	}
 
 }
+

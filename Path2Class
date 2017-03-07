@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-#Written by Manan Shah v1 
+#Written by Manan Shah v1.2 
 #contact: m.shah@ncl.res.in or manan.b.shah@gmail.com 
 #Add comments here to list changelog
 use strict;
@@ -10,9 +10,8 @@ Path2Class
 This Script is designed to convert output of KO2Path to a sublevel level profile using kegg.jp as reference.
 
 Developed on and for Unix/Linux.
-If you are behind a proxy before the program is executed you will need to set proxy address as:
+If you are behind a proxy (Check README)
 
-export http_proxy://user:password\@proxyaddress:port/
 
 Thank you for using this program
 --Developed by Manan Shah
@@ -34,7 +33,7 @@ if ( exists($ARGV[0])){
 print "\nFile Bieng Processed $filepath\n";
 if ( exists($ARGV[1])){
 	$keyword=$ARGV[1];
-	print "sub-class keyword:$keyword";
+	print "sub-class keyword:$keyword\n";
 }else{
 	
 	print "Sub-Class (Keyword)[Leave Blank If not required]:";
@@ -42,13 +41,13 @@ if ( exists($ARGV[1])){
 }
 if ( exists($ARGV[2])){
 	$kegg_dir=$ARGV[2];
-	print "Folder to store and retrive KEGG data from:$kegg_dir";
+	print "Folder to store and retrive KEGG data from:$kegg_dir\n";
 }else{
 	print "Folder to store and retrive KEGG data from\n(Check Readme for Reason):";
 	chomp($kegg_dir=<STDIN>);
 }
 
-open (my $fh, "<", $filepath);
+open (my $fh, "<", $filepath) || die "File not found: $filepath";
 chomp(my $headerline=<$fh>);
 my @headers=split("\t",$headerline);
 shift(@headers);														#identifying the sample IDs
@@ -59,6 +58,8 @@ my $indetcount=0;
 my %ClassCount;
 my @keyword_array;
 my %keyword_profile;
+my @sublevel_values;
+my $previous_sublevel="";
 
 print "\n";
 print "processing identifier no:\n";
@@ -84,25 +85,68 @@ foreach my $line (<$fh>){												#reading each line of Tax4Fun file
 
 close($fh);																#close Tax4Fun file
 $filepath=~s/_pathwaysprofile.tsv//g;
-my $outfilename=$filepath."_sublevelprofile.tsv";
-my $outfile2=$filepath."_classkeywordprofile.tsv";
+my $outfilename=$filepath."_sub-sublevelprofile.tsv";
+my $outfile2=$filepath."_class"."$keyword"."_profile.tsv";
+my $outfile3=$filepath."_sublevelprofile.tsv";
+
 print "\n\nOutput saved to $outfilename\n";
 
 
 #Writing Sublevel Profile
 open (my $output, ">",$outfilename);									#open OUTPUT file;
-print $output "\"KEGG_Class(slevel Counts)\"\t";foreach(@headers){print $output "$_\t";};print $output "\n"; #printing the header line in output
+print $output "\"KEGG_Class\"\t\"Kegg_Sub_class(Pathway Counts)\"\t";foreach(@headers){print $output "$_\t";};print $output "\n"; #printing the header line in output
+open (my $output3, ">",$outfile3);									#open OUTPUT file;
+print $output3 "\"KEGG_Class\"\t";foreach(@headers){print $output3 "$_\t";};print $output3 "\n"; #printing the header line in output
+
 @unique_slevels= reverse sort @unique_slevels;
-for(my $i=0;$i<scalar(@unique_slevels);$i++){							#printing the sublevel profile
-	my $thisslevel=$unique_slevels[$i];
-	my $class_count=$ClassCount{$thisslevel}/scalar(@headers);
-	print $output "\"$thisslevel($class_count)\"\t";
+for(my $i=0;$i<=scalar(@unique_slevels);$i++){							#printing the sublevel profile
+	my $thisslevel="";
+	my $class_count=0;
+	if (exists $unique_slevels[$i]){
+		$thisslevel=$unique_slevels[$i];
+		$class_count=$ClassCount{$thisslevel}/scalar(@headers);
+	}
+	my $ths2=$thisslevel;
+	my $ths3;
+	my $sublevel;
+	my @this_level_sublevel;
+	if($ths2=~/(.*);(.*)/){
+		$sublevel=$1;
+		$ths3="\"".$1."\"\t\"".$2;
+	}else{
+		$ths3="\"Unknown\"\t\"".$thisslevel;
+		$sublevel="Unknown-$thisslevel";
+	}
+	print $output "$ths3($class_count)\"\t";
 	for(my $x=0;$x<scalar(@headers);$x++){
+		if($i<scalar(@unique_slevels)){
 		print $output "$arrayofhashes[$x]{$thisslevel}\t";
+		push (@this_level_sublevel,$arrayofhashes[$x]{$thisslevel});}
 	}
 	print $output "\n";
+	if($sublevel eq $previous_sublevel){
+		for(my $x=0;$x<scalar(@sublevel_values);$x++){
+			$sublevel_values[$x]=$sublevel_values[$x]+$this_level_sublevel[$x];
+		}
+	}
+	else{
+		my @print_sub=@sublevel_values;
+		print $output3 "$previous_sublevel\t";
+		for(my $x=0;$x<scalar(@print_sub);$x++){
+			print $output3 "$print_sub[$x]\t";
+		}
+		print $output3 "\n";
+		$previous_sublevel=$sublevel;
+		@sublevel_values=@this_level_sublevel;
+	}
 }
 close ($output);
+close ($output3);
+my $delete_line=`head -n -1 $outfilename `;
+open (my $output, ">",$outfilename);
+print $output $delete_line;
+close($output);
+
 
 #Writing Keyword Profile
 if($keyword=~/\w/){
@@ -150,7 +194,6 @@ sub find_slevels{														#subroutine to fetch kegg slevels from KEGG
 		}
 		
 	}
-	#print scalar(@out);
 	if (scalar(@out)<1){push (@out, "unknown class $prot--$kid")}
 	return @out;
 }
@@ -167,8 +210,6 @@ sub calculate_slevel_profile{											#subroutine to process the profile into 
 		my $value=$raw_values[$i];
 		my $devidevalues=$value/scalar(@slevels);
 		foreach my $slevel(@slevels){
-			#my $uniqueslevelstring="@unique_slevels";
-			#if ( $uniqueslevelstring=~/\s$slevel\s/ ) {
 			if ($slevel~~@unique_slevels){
 				my $tmp=$ClassCount{$slevel};
 				$tmp++;
@@ -184,7 +225,6 @@ sub calculate_slevel_profile{											#subroutine to process the profile into 
 				}else{
 					$arrayofhashes[$i]{$slevel}=$devidevalues;
 					}
-			
 		}
 
 	}

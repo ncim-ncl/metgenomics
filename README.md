@@ -56,7 +56,7 @@ Please NOTE: At every stage when requested to enter the path make sure
 ************************************************************************
 ************************************************************************
 Please cite:
-xxxxx
+Mehetre, G., Shah, M., Dastager, S.G. et al. Arch Microbiol (2018). https://doi.org/10.1007/s00203-018-1484-4
 ************************************************************************
 
 STEP1: Run Tax4Fun

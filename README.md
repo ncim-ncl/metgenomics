@@ -2,7 +2,7 @@ Readme For runningt4f.pl, KO2Path and Path2Class
 ------------------------------------------------------------------------
 
 These Scripts Are developed to help researchers analyze Tax4Fun Output 
-and carry out a in-dpet functional analysis of the Amplicon Metagenomics 
+and carry out a in-depth functional analysis of the Amplicon Metagenomics 
 dataset. These scripts will take Tax4Fun Output and fetch all the KO IDs
 from them and then connect to Kegg Server to extract:
 1) KO2Path: Pathway Information for each KO ID.
@@ -49,7 +49,7 @@ PERL-	 ALso Installed on LInux by default if not would be available
 
 Statistics::R package:
 		install with the command:
-		`cpan cpan install Statistics::R`
+		`sudo cpan install Statistics::R`
 ************************************************************************
 Please NOTE: At every stage when requested to enter the path make sure 
 			 you enter the path with the trailing "/";
